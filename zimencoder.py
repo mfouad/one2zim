@@ -49,11 +49,11 @@ def encode_notebook(path, name):
     fileZim.write('[Notebook]\nname=' + name + '\nversion=0.4\nendofline=dos')
     fileZim.close()
 
-def create_page(page_path, page_meta):
+def create_page(page_path, page_name, page_create_date):
 
     # Some verbose, usefull on large contents
     # to be aware that the program is still processing...
-    title =  page_meta['title'] if 'title' in page_meta else page_meta['name']
+    title =  page_name
     print u'Creating file: ' , title.encode('utf-8')
 
     fileOut = io.open(page_path + ".txt", 'w', encoding='utf-8')
@@ -61,7 +61,7 @@ def create_page(page_path, page_meta):
     # Standard information at the start of any Zim file
     fileOut.write(u'Content-Type: text/x-zim-wiki\n')
     fileOut.write(u'Wiki-Format: zim 0.4\n')
-    fileOut.write(u'Creation-Date: ' + page_meta['createdTime'] + u'\n')
+    fileOut.write(u'Creation-Date: ' + page_create_date + u'\n')
 
     fileOut.write(u'\n====== ' + title + u' ======\n')
     fileOut.write(u'\n')
@@ -223,10 +223,10 @@ def process_content(page, elements, currentFormat):
             text = re.sub("^\n\r", '', text)
             page.pagefile.write(unicode(text))
 
-def encode_page(page_path, page_meta, page_content=None):
+def encode_page(page_path, page_name, page_create_date, page_content=None):
     page = Page()
     page.images = {}
-    page.pagefile = create_page(page_path, page_meta)
+    page.pagefile = create_page(page_path, page_name, page_create_date)
     if page_content:
         soup = BeautifulSoup(page_content, 'html.parser')
         body = soup.html.body

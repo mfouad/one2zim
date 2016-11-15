@@ -1,6 +1,7 @@
 import io
 import os
 import zimencoder
+import re
 
 class OneNote:
     def __init__(self, api):
@@ -26,34 +27,44 @@ class OneNote:
         except OSError:
             pass
 
+    # creates a file and a dir with the name of the object
+    def create(self, parent_path, name):
+        clean_name = "_".join(re.findall("[a-zA-Z]+", name))
+        path = os.path.join(parent_path, clean_name)
+        self.mkdir(path)
+        
+        return (path, clean_name)
+
     def get_notebooks(self):
         home_path = os.path.abspath("Notebooks")
-        zimencoder.encode_notebook(home_path, "ImportedFromOneNote")
         self.mkdir(home_path)
+        zimencoder.encode_notebook(home_path, "ImportedFromOneNote")
 
         notebooks = self.fetch('https://www.onenote.com/api/v1.0/me/notes/notebooks')
         for notebook in notebooks:
             print(notebook["name"], notebook["lastModifiedTime"])
             
-            notebook_path = os.path.join(home_path, notebook["name"])
-            self.mkdir(notebook_path)
-            zimencoder.encode_notebook(notebook_path, notebook["name"])
+            (notebook_path, notebook_name) = self.create(home_path, notebook["name"])
+            zimencoder.encode_notebook(notebook_path, notebook_name)
+            zimencoder.encode_page(notebook_path, notebook_name, notebook['createdTime'], u"")
 
             sections = self.fetch(notebook["sectionsUrl"])
             for section in sections:
                 print(section["name"], section["lastModifiedTime"])
-                section_path = os.path.join(notebook_path, section["name"])
-                self.mkdir(section_path)
-                zimencoder.encode_page(section_path, section, u"")
+
+                (section_path, section_name) = self.create(notebook_path, section["name"])
+                zimencoder.encode_page(section_path, section_name, section['createdTime'], u"")
+                
                 pages = self.fetch(section["pagesUrl"])
                 for page in pages:
                     print(page["title"], page["id"], page["contentUrl"])
-                    page_path = os.path.join(section_path, page["title"])
+                    
+                    (page_path, page_name)  = self.create(section_path, page["title"])
                     content = self.fetch_html(page["contentUrl"])
                     with io.open(page_path + ".html", 'w', encoding='utf-8') as fpage:
                         fpage.write(unicode(content))
 
-                    page_info = zimencoder.encode_page(page_path, page, content)
+                    page_info = zimencoder.encode_page(page_path, page_name, page['createdTime'], content)
                     # if it has images, make a dir for the page
                     if len(page_info.images) > 0:
                         self.mkdir(page_path)
