@@ -2,7 +2,7 @@
 Notebooks/
 log.txt
 token.dat
-run.sh
+run_with_keys.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

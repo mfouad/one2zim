@@ -9,8 +9,12 @@ class OneNote:
 
     def fetch(self, url):
         res = self.api.get(url)
-        res = res.json()
-        return res["value"]
+        res_json = res.json()
+        if 'value' in res_json:
+            return res_json["value"]
+        else: 
+            print res.text
+            return None
 
     def fetch_html(self, url):
         res = self.api.get(url)
@@ -43,12 +47,13 @@ class OneNote:
         notebooks = self.fetch('https://www.onenote.com/api/v1.0/me/notes/notebooks')
         for notebook in notebooks:
             print(notebook["name"], notebook["lastModifiedTime"])
-            
             (notebook_path, notebook_name) = self.create(home_path, notebook["name"])
             zimencoder.encode_notebook(notebook_path, notebook_name)
             zimencoder.encode_page(notebook_path, notebook_name, notebook['createdTime'], u"")
 
             sections = self.fetch(notebook["sectionsUrl"])
+            if sections is None:
+                continue
             for section in sections:
                 print(section["name"], section["lastModifiedTime"])
 
